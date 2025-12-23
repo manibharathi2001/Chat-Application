@@ -82,4 +82,4 @@ server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
 
 // exporting server for vercel
 
-export default server
+export default app;
