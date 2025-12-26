@@ -12,13 +12,24 @@ import messageRouter from "./routes/messageRoutes.js";
 const app = express();
 
 const FRONTEND_URLS = process.env.FRONTEND_URL
-  ? process.env.FRONTEND_URL.split(",").map(url => url.trim())
+  ? process.env.FRONTEND_URL.split(",").map(url => url.trim().replace(/\/$/, ""))
   : ["http://localhost:5173"];
 
 // Middleware
 app.use(
   cors({
-    origin: FRONTEND_URLS,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps)
+      if (!origin) return callback(null, true);
+
+      if (FRONTEND_URLS.includes(origin) || FRONTEND_URLS.includes("*")) {
+        callback(null, true);
+      } else {
+        console.error(`CORS Rejecting Origin: ${origin}`);
+        console.log(`Allowed Origins: ${FRONTEND_URLS.join(", ")}`);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
