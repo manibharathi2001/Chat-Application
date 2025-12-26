@@ -11,12 +11,14 @@ import messageRouter from "./routes/messageRoutes.js";
 
 const app = express();
 
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const FRONTEND_URLS = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(",").map(url => url.trim())
+  : ["http://localhost:5173"];
 
 // Middleware
 app.use(
   cors({
-    origin: FRONTEND_URL,
+    origin: FRONTEND_URLS,
     credentials: true,
   })
 );
@@ -35,7 +37,7 @@ const server = http.createServer(app);
 export const io = new Server(server, {
   path: "/socket.io",
   cors: {
-    origin: FRONTEND_URL,
+    origin: FRONTEND_URLS,
     methods: ["GET", "POST"],
     credentials: true,
   },
