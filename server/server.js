@@ -11,8 +11,15 @@ import messageRouter from "./routes/messageRoutes.js";
 
 const app = express();
 
-// Middleware (do this before routes)
-app.use(cors()); // in dev you can use {origin: 'http://localhost:5173'} instead of '*'
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+
+// Middleware
+app.use(
+  cors({
+    origin: FRONTEND_URL,
+    credentials: true,
+  })
+);
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -28,7 +35,7 @@ const server = http.createServer(app);
 export const io = new Server(server, {
   path: "/socket.io",
   cors: {
-    origin: "*", // change to your frontend origin in production
+    origin: FRONTEND_URL,
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -39,8 +46,6 @@ export const userSocketMap = {};
 
 // Socket connection handlers
 io.on("connection", (socket) => {
-  // If you pass userId in query: socket.handshake.query.userId
-  // If you pass via auth: socket.handshake.auth.userId
   const userId = socket.handshake.query?.userId || socket.handshake.auth?.userId;
   console.log("Socket connected:", socket.id, "userId:", userId);
 
@@ -59,27 +64,22 @@ io.on("connection", (socket) => {
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });
 
-  // example: listen for messages
   socket.on("sendMessage", (msg) => {
     console.log("sendMessage", msg);
-    // handle message logic...
   });
 });
 
-// Mount API routes AFTER socket is set up (order doesn't strictly matter but good for clarity)
+// API routes
 app.use("/api/auth", userRouter);
 app.use("/api/messages", messageRouter);
 
 // connect to DB then start server
 await connectDB();
 
-
-if (process.env.NODE_ENV!=="production"){
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
-}
-
-
-// exporting server for vercel
+server.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
+  console.log(`Allowed CORS Origin: ${FRONTEND_URL}`);
+});
 
 export default app;

@@ -128,7 +128,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       // create socket instance
-      const newSocket = io(backendUrl, {
+      const newSocket = io(backendUrl || "http://localhost:5000", {
         path: "/socket.io",
         transports: ["websocket", "polling"],
         // pass userId so server can map online users (server reads handshake.query.userId)
